@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Issue - CleanIndia.ai{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Report Cleanliness Issue</h1>
+    <p>Upload a photo, capture GPS location, and submit your report as <strong>{{ user.username }}</strong>.</p>
+</div>
+
+<div class="alert">
+    Complaints are accepted only within the selected CleanIndia.ai service area and between {{ service_open_hour }}:00 AM and 5:00 PM.
+</div>
+
+<div class="card map-card">
+    <h3>Choose Complaint Location</h3>
+    <p>Choose your service city, then drag the map to select your exact garbage location.</p>
+
+    <label for="service-city-select">Service City</label>
+    <select id="service-city-select">
+        {% for city in service_cities %}
+            <option value="{{ forloop.counter0 }}">{{ city.name }}</option>
+        {% endfor %}
+    </select>
+
+    <div id="map"></div>
+
+    <p id="service-status" class="service-status">
+        Move the map to check service availability.
+    </p>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="is_live_photo" id="is_live_photo" value="false">
+    {{ form.as_p }}
+
+    <div class="camera-box">
+        <h3>Live Photo Capture</h3>
+
+        <button type="button" onclick="openCamera()">Open Camera</button>
+        <button type="button" onclick="capturePhoto()">Capture Photo</button>
+        <button type="button" onclick="stopCamera()">Stop Camera</button>
+
+        <br><br>
+
+        <video id="camera" autoplay playsinline style="display:none; width:100%; max-width:420px; border-radius:12px;"></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+
+        <div id="photo-preview-box" style="display:none;">
+            <p><strong>Captured Photo Preview:</strong></p>
+            <img id="photo-preview" style="width:100%; max-width:420px; border-radius:12px;">
+        </div>
+    </div>
+
+    <p id="gps-status" style="color:#0f766e; font-weight:bold;"></p>
+    <p id="ai-preview" style="color:#0f766e; font-weight:bold;"></p>
+
+    <button type="button" onclick="getLocation()">
+        Use My Current GPS Location
+    </button>
+    <br><br>
+
+    <button id="submit-btn" type="submit" disabled>Submit Complaint</button>
+</form>
+
+{{ service_cities|json_script:"service-city-data" }}
+
+<script>
+const serviceCities = JSON.parse(document.getElementById("service-city-data").textContent);
+const defaultCity = serviceCities[0];
+
+let map = L.map("map").setView([defaultCity.latitude, defaultCity.longitude], 12);
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "OpenStreetMap"
+}).addTo(map);
+
+let centerMarker = L.marker(map.getCenter()).addTo(map);
+
+serviceCities.forEach(city => {
+    L.circle([city.latitude, city.longitude], {
+        radius: city.radius_km * 1000,
+        color: "#16a34a",
+        fillColor: "#16a34a",
+        fillOpacity: 0.08,
+        weight: 2
+    }).addTo(map).bindPopup(`${city.name} service area`);
+});
+
+const citySelect = document.getElementById("service-city-select");
+const statusText = document.getElementById("service-status");
+const submitBtn = document.getElementById("submit-btn");
+const locationInput = document.getElementById("id_location");
+
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+    const earthRadius = 6371;
+    const toRadians = degrees => degrees * Math.PI / 180;
+
+    lat1 = toRadians(lat1);
+    lon1 = toRadians(lon1);
+    lat2 = toRadians(lat2);
+    lon2 = toRadians(lon2);
+
+    const dlat = lat2 - lat1;
+    const dlon = lon2 - lon1;
+
+    const a = (
+        Math.sin(dlat / 2) ** 2
+        + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon / 2) ** 2
+    );
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return earthRadius * c;
+}
+
+function getAvailableServiceCity(latitude, longitude) {
+    return serviceCities.find(city => {
+        const distance = calculateDistanceKm(
+            latitude,
+            longitude,
+            city.latitude,
+            city.longitude
+        );
+
+        return distance <= city.radius_km;
+    });
+}
+
+function checkServiceAvailability() {
+    const center = map.getCenter();
+    const latInput = document.getElementById("id_latitude");
+    const lngInput = document.getElementById("id_longitude");
+
+    centerMarker.setLatLng(center);
+
+    latInput.value = center.lat;
+    lngInput.value = center.lng;
+
+    statusText.innerText = "Checking service availability...";
+    statusText.style.color = "#475569";
+    submitBtn.disabled = true;
+
+    const matchedCity = getAvailableServiceCity(center.lat, center.lng);
+
+    if (matchedCity) {
+        statusText.innerText = `Service available in ${matchedCity.name}`;
+        statusText.style.color = "#16a34a";
+        submitBtn.disabled = false;
+        citySelect.value = serviceCities.findIndex(city => city.name === matchedCity.name);
+        locationInput.value = matchedCity.name;
+    } else {
+        statusText.innerText = "Service not available in this area.";
+        statusText.style.color = "#dc2626";
+        submitBtn.disabled = true;
+        locationInput.value = "";
+    }
+}
+
+citySelect.addEventListener("change", function() {
+    const selectedCity = serviceCities[Number(this.value)];
+    locationInput.value = selectedCity.name;
+    map.setView([selectedCity.latitude, selectedCity.longitude], 13);
+});
+
+map.on("moveend", checkServiceAvailability);
+checkServiceAvailability();
+</script>
+
+<script>
+function getLocation() {
+    const gpsStatus = document.getElementById("gps-status");
+
+    if (!navigator.geolocation) {
+        gpsStatus.innerText = "GPS is not supported by this browser.";
+        return;
+    }
+
+    gpsStatus.innerText = "Fetching your GPS location...";
+
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            document.getElementById("id_latitude").value = position.coords.latitude;
+            document.getElementById("id_longitude").value = position.coords.longitude;
+            map.setView([position.coords.latitude, position.coords.longitude], 14);
+            gpsStatus.innerText = "GPS location captured successfully.";
+        },
+        function(error) {
+            gpsStatus.innerText = "Unable to fetch GPS location. Please allow location permission.";
+        }
+    );
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const latField = document.getElementById("id_latitude");
+    const lngField = document.getElementById("id_longitude");
+    const imageField = document.getElementById("id_image");
+    const locationField = document.getElementById("id_location");
+
+    if (locationField) {
+        locationField.readOnly = true;
+        locationField.placeholder = "Select service city from map";
+    }
+
+    if (latField && lngField) {
+        latField.closest("p").style.display = "none";
+        lngField.closest("p").style.display = "none";
+    }
+
+    if (imageField) {
+        imageField.closest("p").style.display = "none";
+    }
+});
+</script>
+
+<script>
+let cameraStream = null;
+
+function openCamera() {
+    const video = document.getElementById("camera");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            cameraStream = stream;
+            video.srcObject = stream;
+            video.style.display = "block";
+        })
+        .catch(function(error) {
+            alert("Camera permission denied or camera not available.");
+        });
+}
+
+function capturePhoto() {
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const previewBox = document.getElementById("photo-preview-box");
+    const preview = document.getElementById("photo-preview");
+    const imageInput = document.getElementById("id_image");
+
+    if (!cameraStream) {
+        alert("Please open camera first.");
+        return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], "live-captured-complaint.jpg", {
+            type: "image/jpeg"
+        });
+
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        imageInput.files = dataTransfer.files;
+        document.getElementById("is_live_photo").value = "true";
+
+        preview.src = URL.createObjectURL(blob);
+        previewBox.style.display = "block";
+
+        alert("Photo captured and attached successfully.");
+    }, "image/jpeg", 0.9);
+}
+
+function stopCamera() {
+    const video = document.getElementById("camera");
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+
+    video.style.display = "none";
+}
+</script>
+
+<script>
+const imageInput = document.getElementById("id_image");
+const categoryInput = document.getElementById("id_category");
+const aiPreview = document.getElementById("ai-preview");
+
+if (imageInput) {
+    imageInput.addEventListener("change", function() {
+        if (categoryInput.value) {
+            aiPreview.innerText = "AI analyzing image... Suggested category: " + categoryInput.options[categoryInput.selectedIndex].text;
+        } else {
+            aiPreview.innerText = "AI analyzing image... Please select a category for better prediction.";
+        }
+    });
+}
+</script>
+{% endblock %}

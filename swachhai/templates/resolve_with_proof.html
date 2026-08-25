@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Resolve With Proof - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Resolve Complaint With Proof</h1>
+    <p>Upload an after-cleanup image and mark the complaint as resolved.</p>
+</div>
+
+<div class="card">
+    <p><strong>Complaint ID:</strong> {{ complaint.id }}</p>
+    <p><strong>Location:</strong> {{ complaint.location }}</p>
+    <p><strong>Description:</strong> {{ complaint.description }}</p>
+
+    {% if complaint.image %}
+        <p><strong>Before Image:</strong></p>
+        <img class="complaint-img" src="{{ complaint.image.url }}">
+    {% endif %}
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Mark Resolved With Proof</button>
+</form>
+{% endblock %}

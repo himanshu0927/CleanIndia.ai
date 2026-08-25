@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Complaints</title>
+</head>
+<body>
+    <h1>Complaints</h1>
+    <p><a href="{% url 'complaint_create' %}">Add complaint</a></p>
+
+    {% for complaint in complaints %}
+        <article>
+            <h2>{{ complaint.title }}</h2>
+            <p>{{ complaint.location }}</p>
+            <p>{{ complaint.description }}</p>
+        </article>
+    {% empty %}
+        <p>No complaints yet.</p>
+    {% endfor %}
+</body>
+</html>

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Authority Login - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Authority Login</h1>
+    <p>Login as municipal authority staff to manage complaints.</p>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login as Authority</button>
+</form>
+
+<p>
+    Need an authority account?
+    <a href="/authority-signup/">Create Authority Account</a>
+</p>
+
+<p>
+    Citizen user?
+    <a href="/user-login/">Login as User</a>
+</p>
+{% endblock %}

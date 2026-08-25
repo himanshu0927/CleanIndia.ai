@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Authority Signup - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Authority Signup</h1>
+    <p>Create a municipal staff account for the authority dashboard.</p>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <p>
+        <label for="id_authority_code">Authority Code</label>
+        <input id="id_authority_code" type="password" name="authority_code" required>
+        {% if authority_code_error %}
+            <span class="errorlist">{{ authority_code_error }}</span>
+        {% endif %}
+    </p>
+
+    <button type="submit">Create Authority Account</button>
+</form>
+
+<p>
+    Already authority staff?
+    <a href="/authority-login/">Login as Authority</a>
+</p>
+
+<p>
+    Citizen user?
+    <a href="/user-signup/">Create User Account</a>
+</p>
+{% endblock %}

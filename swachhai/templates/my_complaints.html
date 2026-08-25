@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}My Complaints - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>My Complaints</h1>
+    <p>Track your submitted complaints and resolution progress.</p>
+</div>
+
+{% for complaint in complaints %}
+    <div class="card">
+        <h3>{{ complaint.category }}</h3>
+        <p><strong>Location:</strong> {{ complaint.location }}</p>
+        <p><strong>Detected Area:</strong> {{ complaint.detected_area }}</p>
+
+        {% if complaint.service_available %}
+            <p><span class="verified-badge">Service Available</span></p>
+        {% else %}
+            <p><span class="warning-badge">Service Not Available</span></p>
+        {% endif %}
+
+        <p><strong>Description:</strong> {{ complaint.description }}</p>
+        <p><strong>Status:</strong> {{ complaint.status }}</p>
+        <p>
+            <strong>Severity:</strong>
+            <span class="severity-badge severity-{{ complaint.severity|lower }}">{{ complaint.severity }}</span>
+        </p>
+        <p><strong>AI Result:</strong> {{ complaint.ai_result }}</p>
+        <p><strong>AI Waste Type:</strong> {{ complaint.ai_waste_type }}</p>
+        <p><strong>AI Confidence:</strong> {{ complaint.ai_confidence }}%</p>
+        <a class="clear-btn" href="{% url 'complaint_detail' complaint.id %}">View Details</a>
+
+        {% if complaint.latitude and complaint.longitude %}
+            <p><strong>GPS:</strong> {{ complaint.latitude }}, {{ complaint.longitude }}</p>
+            <p>
+                <strong>Map:</strong>
+                <a target="_blank" href="https://www.google.com/maps?q={{ complaint.latitude }},{{ complaint.longitude }}">
+                    View Exact Location
+                </a>
+            </p>
+        {% else %}
+            <p><strong>GPS:</strong> Not provided</p>
+        {% endif %}
+
+        {% if complaint.image %}
+            <p><img class="complaint-img" src="{{ complaint.image.url }}"></p>
+        {% endif %}
+    </div>
+{% empty %}
+    <div class="card">
+        <p>You have not submitted any complaints yet.</p>
+        <a class="resolve-btn" href="/report/">Report Complaint</a>
+    </div>
+{% endfor %}
+{% endblock %}

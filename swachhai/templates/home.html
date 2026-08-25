@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>CleanIndia.ai</h1>
+    <p>AI-powered cleanliness reporting, hotspot tracking, and civic complaint management platform.</p>
+
+    <div class="btn-row">
+        <a class="btn" href="/report/">Report Issue</a>
+        {% if user.is_staff %}
+            <a class="btn" href="/dashboard/">Authority Dashboard</a>
+        {% endif %}
+    </div>
+</section>
+
+<div class="stats">
+    <div class="stat-box">
+        <h3>Total Reports</h3>
+        <p>{{ total }}</p>
+    </div>
+    <div class="stat-box">
+        <h3>Pending</h3>
+        <p>{{ pending }}</p>
+    </div>
+    <div class="stat-box">
+        <h3>Resolved</h3>
+        <p>{{ resolved }}</p>
+    </div>
+</div>
+
+<div class="feature-grid">
+    <div class="card">
+        <h3>AI Waste Detection</h3>
+        <p>Detects waste type such as plastic, wet waste, dry waste, e-waste, glass, metal, and construction waste.</p>
+    </div>
+    <div class="card">
+        <h3>Severity Score</h3>
+        <p>Prioritizes complaints as Low, Medium, High, or Critical for faster cleanup action.</p>
+    </div>
+    <div class="card">
+        <h3>GPS Location</h3>
+        <p>Captures exact latitude and longitude and opens the report location on Google Maps.</p>
+    </div>
+</div>
+{% endblock %}

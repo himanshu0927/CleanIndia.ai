@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Feedback - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Submit Feedback</h1>
+    <p>Rate the cleanup quality after your complaint is resolved.</p>
+</div>
+
+<div class="card">
+    <p><strong>Complaint ID:</strong> {{ complaint.id }}</p>
+    <p><strong>Location:</strong> {{ complaint.location }}</p>
+    <p><strong>Status:</strong> {{ complaint.status }}</p>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit Feedback</button>
+</form>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Complaint Details - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Complaint Details</h1>
+    <p>Full complaint record, AI analysis, location, timeline, proof, and feedback.</p>
+</div>
+
+<div class="card">
+    <p><strong>Complaint ID:</strong> {{ complaint.id }}</p>
+    <p><strong>Submitted By:</strong> {{ complaint.name }}</p>
+    <p><strong>Category:</strong> {{ complaint.category }}</p>
+    <p><strong>Location:</strong> {{ complaint.location }}</p>
+    <p><strong>Detected Area:</strong> {{ complaint.detected_area }}</p>
+
+    {% if complaint.service_available %}
+        <p><span class="verified-badge">Service Available</span></p>
+    {% else %}
+        <p><span class="warning-badge">Service Not Available</span></p>
+    {% endif %}
+
+    <p><strong>Description:</strong> {{ complaint.description }}</p>
+    <p><strong>Status:</strong> {{ complaint.status }}</p>
+    {% if user.is_staff %}
+        <p><strong>Operation Status:</strong> {{ complaint.operation_status }}</p>
+        <p><strong>Batch Area:</strong> {{ complaint.batch_area }}</p>
+        <p><strong>Fake Risk Score:</strong> {{ complaint.fake_risk_score }}/100</p>
+        <p><strong>Verification:</strong> {{ complaint.verification_status }}</p>
+
+        {% if complaint.is_live_photo %}
+            <p><span class="verified-badge">Live Photo</span></p>
+        {% else %}
+            <p><span class="warning-badge">Gallery Upload</span></p>
+        {% endif %}
+    {% endif %}
+    <p>
+        <strong>Severity:</strong>
+        <span class="severity-badge severity-{{ complaint.severity|lower }}">{{ complaint.severity }}</span>
+    </p>
+    <p><strong>AI Result:</strong> {{ complaint.ai_result }}</p>
+    <p><strong>AI Waste Type:</strong> {{ complaint.ai_waste_type }}</p>
+    <p><strong>AI Confidence:</strong> {{ complaint.ai_confidence }}%</p>
+    <p><strong>Submitted On:</strong> {{ complaint.created_at }}</p>
+
+    <hr>
+
+    <h2>Status Timeline</h2>
+
+    <div class="timeline">
+        <div class="timeline-item done">
+            <strong>Complaint Submitted</strong>
+            <p>{{ complaint.created_at }}</p>
+        </div>
+
+        <div class="timeline-item {% if complaint.in_progress_at %}done{% endif %}">
+            <strong>In Progress</strong>
+            <p>
+                {% if complaint.in_progress_at %}
+                    {{ complaint.in_progress_at }}
+                {% else %}
+                    Not started yet
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="timeline-item {% if complaint.resolved_at %}done{% endif %}">
+            <strong>Resolved</strong>
+            <p>
+                {% if complaint.resolved_at %}
+                    {{ complaint.resolved_at }}
+                {% else %}
+                    Not resolved yet
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    {% if complaint.status == 'Resolved' and complaint.name == user.username %}
+        {% if complaint.rating %}
+            <hr>
+            <h2>Your Feedback</h2>
+            <p><strong>Rating:</strong> {{ complaint.rating }}/5</p>
+            <p><strong>Feedback:</strong> {{ complaint.feedback }}</p>
+        {% else %}
+            <hr>
+            <a class="resolve-btn" href="{% url 'submit_feedback' complaint.id %}">Give Feedback</a>
+        {% endif %}
+    {% endif %}
+
+    {% if complaint.rating and user.is_staff %}
+        <hr>
+        <h2>Citizen Feedback</h2>
+        <p><strong>Rating:</strong> {{ complaint.rating }}/5</p>
+        <p><strong>Feedback:</strong> {{ complaint.feedback }}</p>
+    {% endif %}
+
+    {% if complaint.latitude and complaint.longitude %}
+        <p><strong>GPS:</strong> {{ complaint.latitude }}, {{ complaint.longitude }}</p>
+        <p>
+            <strong>Map:</strong>
+            <a target="_blank" href="https://www.google.com/maps?q={{ complaint.latitude }},{{ complaint.longitude }}">
+                View Exact Location
+            </a>
+        </p>
+    {% else %}
+        <p><strong>GPS:</strong> Not provided</p>
+    {% endif %}
+
+    {% if complaint.image %}
+        <hr>
+        <h2>Before Image</h2>
+        <img class="detail-img" src="{{ complaint.image.url }}">
+    {% endif %}
+
+    {% if complaint.resolved_image %}
+        <hr>
+        <h2>After Cleanup Proof</h2>
+        <img class="detail-img" src="{{ complaint.resolved_image.url }}">
+    {% endif %}
+
+    {% if user.is_staff %}
+        <hr>
+        <a class="status-btn pending" href="{% url 'update_status' complaint.id 'Pending' %}">Pending</a>
+        <a class="status-btn progress" href="{% url 'update_status' complaint.id 'In Progress' %}">In Progress</a>
+        <a class="status-btn resolved" href="{% url 'update_status' complaint.id 'Resolved' %}">Resolved</a>
+        <br><br>
+        <a class="status-btn waiting" href="{% url 'update_operation_status' complaint.id 'Waiting for Batch' %}">Waiting Batch</a>
+        <a class="status-btn ready" href="{% url 'update_operation_status' complaint.id 'Ready for Pickup' %}">Ready Pickup</a>
+        <a class="status-btn vehicle" href="{% url 'update_operation_status' complaint.id 'Vehicle Assigned' %}">Vehicle Assigned</a>
+        <a class="status-btn resolved" href="{% url 'update_operation_status' complaint.id 'Cleanup Done' %}">Cleanup Done</a>
+        <br><br>
+        <a class="resolve-btn" href="{% url 'resolve_with_proof' complaint.id %}">Resolve With Proof</a>
+        <form class="inline-delete-form" method="POST" action="{% url 'delete_complaint' complaint.id %}" onsubmit="return confirm('Delete this complaint permanently?');">
+            {% csrf_token %}
+            <button class="delete-btn" type="submit">Delete Complaint</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}

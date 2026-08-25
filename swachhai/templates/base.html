@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}CleanIndia.ai{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="service-marquee" role="status">
+    <div class="service-marquee-track">
+        CleanIndia.ai service is available daily from 8:00 AM to 5:00 PM. Complaints submitted outside service hours will not be accepted. Service areas: Gola, Lakhimpur, Sitapur, Lucknow.
+    </div>
+</div>
+
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">CI</div>
+            <div>
+                <h2>CleanIndia.ai</h2>
+                <p>Smart Civic Platform</p>
+            </div>
+        </div>
+
+        <nav>
+            <a href="/">Home</a>
+            <a href="/report/">Report Issue</a>
+
+            {% if user.is_authenticated %}
+                <a href="/my-complaints/">My Complaints</a>
+            {% endif %}
+
+            {% if user.is_staff %}
+                <a href="/dashboard/">Authority Dashboard</a>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <a href="/logout/">Logout</a>
+            {% else %}
+                <a href="/user-login/">User Login</a>
+                <a href="/user-signup/">User Signup</a>
+                <a href="/authority-login/">Authority Login</a>
+                <a href="/authority-signup/">Authority Signup</a>
+            {% endif %}
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+</body>
+</html>

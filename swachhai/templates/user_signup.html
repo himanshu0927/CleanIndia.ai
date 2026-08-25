@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}User Signup - CleanIndia.ai{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>User Signup</h1>
+    <p>Create a citizen account to submit and track your complaints.</p>
+</div>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create User Account</button>
+</form>
+
+<p>
+    Already have a citizen account?
+    <a href="/user-login/">Login as User</a>
+</p>
+
+<p>
+    Authority staff?
+    <a href="/authority-signup/">Create Authority Account</a>
+</p>
+{% endblock %}
