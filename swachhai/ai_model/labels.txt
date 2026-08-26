@@ -1,0 +1,9 @@
+0 Plastic
+1 Wet Waste
+2 Dry Waste
+3 E-Waste
+4 Glass
+5 Metal
+6 Construction Waste
+7 Garbage
+8 Not Garbage
