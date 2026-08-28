@@ -5,15 +5,16 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Avg
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from .ai_detector import AIDetectorSetupError, detect_garbage_image, validate_actual_image_content
-from .forms import ComplaintForm, FeedbackForm, ResolveComplaintForm
+from .forms import ComplaintForm, FeedbackForm, ResolveComplaintForm, SignupForm
 from .models import Complaint
 
 
@@ -189,15 +190,16 @@ def home(request):
 
 def user_signup_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = SignupForm(request.POST)
         if form.is_valid():
             user = form.save()
             user.is_staff = False
             user.save()
             login(request, user)
+            messages.success(request, 'Signup complete. Welcome to CleanIndia.ai!')
             return redirect('home')
     else:
-        form = UserCreationForm()
+        form = SignupForm()
 
     return render(request, 'user_signup.html', {'form': form})
 
@@ -206,7 +208,7 @@ def authority_signup_view(request):
     authority_code_error = None
 
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = SignupForm(request.POST)
         authority_code = request.POST.get('authority_code', '').strip()
 
         if authority_code != settings.AUTHORITY_SIGNUP_CODE:
@@ -216,9 +218,10 @@ def authority_signup_view(request):
             user.is_staff = True
             user.save()
             login(request, user)
+            messages.success(request, 'Authority signup complete. Welcome to the municipal dashboard!')
             return redirect('dashboard')
     else:
-        form = UserCreationForm()
+        form = SignupForm()
 
     return render(request, 'authority_signup.html', {
         'form': form,

@@ -422,6 +422,26 @@ textarea {
     font-weight: 700;
 }
 
+.messages {
+    margin: 0 0 20px;
+}
+
+.message {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.message-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
 .camera-box {
     background: #f8fafc;
     border: 1px solid var(--border);
