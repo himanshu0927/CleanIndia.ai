@@ -336,8 +336,7 @@ def report_complaint(request):
             try:
                 ai_waste_type, ai_confidence = detect_garbage_image(uploaded_image)
             except AIDetectorSetupError as error:
-                form.add_error(None, str(error))
-                return render(request, 'report.html', {**report_context, 'form': form})
+                ai_waste_type, ai_confidence = detect_waste_type(form.cleaned_data.get('category'))
 
             if ai_waste_type == 'Not Garbage' or ai_confidence < 70:
                 form.add_error(

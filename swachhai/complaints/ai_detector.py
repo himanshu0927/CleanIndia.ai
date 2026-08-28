@@ -62,32 +62,57 @@ def _load_model_and_labels():
             'AI packages missing. Install tensorflow-cpu pillow numpy.'
         ) from error
 
-    model = load_model(MODEL_PATH, compile=False)
+    try:
+        model = load_model(MODEL_PATH, compile=False)
+    except Exception as error:
+        raise AIDetectorSetupError(
+            'AI model could not be loaded. Please check keras_model.h5 compatibility.'
+        ) from error
 
-    with open(LABELS_PATH, 'r', encoding='utf-8') as file:
-        labels = [line.strip().split(' ', 1)[-1] for line in file.readlines()]
+    try:
+        with open(LABELS_PATH, 'r', encoding='utf-8') as file:
+            labels = [line.strip().split(' ', 1)[-1] for line in file.readlines() if line.strip()]
+    except OSError as error:
+        raise AIDetectorSetupError(
+            'AI labels file could not be read. Please check labels.txt.'
+        ) from error
+
+    if not labels:
+        raise AIDetectorSetupError('AI labels file is empty.')
 
     return model, labels, Image, np
 
 
 def detect_garbage_image(image_file):
-    model, labels, Image, np = _load_model_and_labels()
+    try:
+        model, labels, Image, np = _load_model_and_labels()
 
-    image_file.seek(0)
-    image = Image.open(image_file).convert('RGB')
-    image = image.resize((224, 224))
+        image_file.seek(0)
+        image = Image.open(image_file).convert('RGB')
+        image = image.resize((224, 224))
 
-    image_array = np.asarray(image)
-    normalized_image = (image_array.astype(np.float32) / 127.5) - 1
+        image_array = np.asarray(image)
+        normalized_image = (image_array.astype(np.float32) / 127.5) - 1
 
-    data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
-    data[0] = normalized_image
+        data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+        data[0] = normalized_image
 
-    prediction = model.predict(data, verbose=0)
-    index = np.argmax(prediction)
+        prediction = model.predict(data, verbose=0)
+        index = int(np.argmax(prediction))
 
-    class_name = labels[index]
-    confidence = int(prediction[0][index] * 100)
+        if index >= len(labels):
+            raise AIDetectorSetupError('AI labels do not match the model output.')
 
-    image_file.seek(0)
-    return class_name, confidence
+        class_name = labels[index]
+        confidence = int(prediction[0][index] * 100)
+
+        image_file.seek(0)
+        return class_name, confidence
+    except AIDetectorSetupError:
+        image_file.seek(0)
+        raise
+    except Exception as error:
+        image_file.seek(0)
+        raise AIDetectorSetupError(
+            'AI image analysis failed. Please try another clear garbage/waste photo.'
+        ) from error
