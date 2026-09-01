@@ -1,6 +1,6 @@
-# CleanIndia.ai
+# EcoVision AI
 
-CleanIndia.ai is an AI-based cleanliness complaint reporting system built using Django. Citizens can report garbage, overflowing bins, illegal dumping, drainage issues, and other cleanliness problems with images and location details. Authority users can manage complaints, update statuses, upload cleanup proof, review citizen feedback, and export reports.
+EcoVision AI is an AI-based cleanliness complaint reporting system built using Django. Citizens can report garbage, overflowing bins, illegal dumping, drainage issues, and other cleanliness problems with images and location details. Authority users can manage complaints, update statuses, upload cleanup proof, review citizen feedback, and export reports.
 
 ## Objective
 
@@ -52,7 +52,7 @@ The objective of this project is to support cleaner cities by making cleanliness
 ## Folder Structure
 
 ```text
-CleanIndia.ai/
+EcoVision AI/
 ├── manage.py
 ├── swachhai/
 │   ├── db.sqlite3
@@ -129,3 +129,4 @@ http://127.0.0.1:8000/
 ## Submission Note
 
 For submission, send code files and `requirements.txt`. Do not include the `venv` folder.
+

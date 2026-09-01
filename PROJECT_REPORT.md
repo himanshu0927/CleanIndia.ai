@@ -1,8 +1,8 @@
-# CleanIndia.ai Project Report
+# EcoVision AI Project Report
 
 ## 1. Introduction
 
-CleanIndia.ai is a web-based cleanliness complaint reporting system. It helps citizens report garbage, overflowing bins, illegal dumping, drainage issues, and other cleanliness-related problems. The project supports the idea of a cleaner India through citizen participation, authority workflow management, location support, and smart demo AI classification.
+EcoVision AI is a web-based cleanliness complaint reporting system. It helps citizens report garbage, overflowing bins, illegal dumping, drainage issues, and other cleanliness-related problems. The project supports the idea of a cleaner India through citizen participation, authority workflow management, location support, and smart demo AI classification.
 
 ## 2. Problem Statement
 
@@ -10,7 +10,7 @@ In many cities, cleanliness problems are noticed by citizens but are not reporte
 
 ## 3. Proposed Solution
 
-CleanIndia.ai provides a digital platform where users can report cleanliness issues by filling a form, uploading an image, and adding location details. The system stores complaints in a database and displays them on an authority-only dashboard. It provides AI-based demo classification, confidence score, status timeline, cleanup proof image, feedback collection, analytics, and CSV export.
+EcoVision AI provides a digital platform where users can report cleanliness issues by filling a form, uploading an image, and adding location details. The system stores complaints in a database and displays them on an authority-only dashboard. It provides AI-based demo classification, confidence score, status timeline, cleanup proof image, feedback collection, analytics, and CSV export.
 
 ## 4. Objectives
 
@@ -94,7 +94,7 @@ In the future, the project can be improved by adding real AI image classificatio
 
 ## 9. Conclusion
 
-CleanIndia.ai is a useful and practical project that combines web development, authentication, image upload, location support, authority workflow, AI-based demo classification, feedback analytics, and report export. It can help citizens and authorities work together for cleaner cities and supports the vision of Swachh Bharat.
+EcoVision AI is a useful and practical project that combines web development, authentication, image upload, location support, authority workflow, AI-based demo classification, feedback analytics, and report export. It can help citizens and authorities work together for cleaner cities and supports the vision of Swachh Bharat.
 
 ## 10. Final Testing Checklist
 
@@ -111,3 +111,4 @@ CleanIndia.ai is a useful and practical project that combines web development, a
 - [ ] Feedback works after resolved
 - [ ] CSV export works
 - [ ] Admin panel works
+

@@ -11,3 +11,6 @@ staticfiles/
 .env
 .env.*
 *.log
+android-webview-app/.gradle/
+android-webview-app/**/build/
+android-webview-app/local.properties

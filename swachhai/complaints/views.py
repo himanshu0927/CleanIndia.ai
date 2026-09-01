@@ -198,7 +198,7 @@ def user_signup_view(request):
                 user.is_staff = False
                 user.save()
                 login(request, user)
-                messages.success(request, 'Signup complete. Welcome to CleanIndia.ai!')
+                messages.success(request, 'Signup complete. Welcome to EcoVision AI!')
                 return redirect('home')
             except DatabaseError:
                 form.add_error(None, 'Signup could not be completed right now. Please try again.')
@@ -666,3 +666,4 @@ def update_operation_status(request, complaint_id, operation_status):
         complaint.save()
 
     return redirect('dashboard')
+
