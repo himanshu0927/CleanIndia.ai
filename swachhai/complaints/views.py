@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.db import DatabaseError
 from django.db.models import Avg
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -192,12 +193,15 @@ def user_signup_view(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            user.is_staff = False
-            user.save()
-            login(request, user)
-            messages.success(request, 'Signup complete. Welcome to CleanIndia.ai!')
-            return redirect('home')
+            try:
+                user = form.save()
+                user.is_staff = False
+                user.save()
+                login(request, user)
+                messages.success(request, 'Signup complete. Welcome to CleanIndia.ai!')
+                return redirect('home')
+            except DatabaseError:
+                form.add_error(None, 'Signup could not be completed right now. Please try again.')
     else:
         form = SignupForm()
 
@@ -214,12 +218,15 @@ def authority_signup_view(request):
         if authority_code != settings.AUTHORITY_SIGNUP_CODE:
             authority_code_error = 'Invalid authority code.'
         elif form.is_valid():
-            user = form.save()
-            user.is_staff = True
-            user.save()
-            login(request, user)
-            messages.success(request, 'Authority signup complete. Welcome to the municipal dashboard!')
-            return redirect('dashboard')
+            try:
+                user = form.save()
+                user.is_staff = True
+                user.save()
+                login(request, user)
+                messages.success(request, 'Authority signup complete. Welcome to the municipal dashboard!')
+                return redirect('dashboard')
+            except DatabaseError:
+                form.add_error(None, 'Authority signup could not be completed right now. Please try again.')
     else:
         form = SignupForm()
 
@@ -233,13 +240,16 @@ def user_login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            user = form.get_user()
+            try:
+                user = form.get_user()
 
-            if user.is_staff:
-                form.add_error(None, 'Authority account detected. Please use Authority Login.')
-            else:
-                login(request, user)
-                return redirect('home')
+                if user.is_staff:
+                    form.add_error(None, 'Authority account detected. Please use Authority Login.')
+                else:
+                    login(request, user)
+                    return redirect('home')
+            except DatabaseError:
+                form.add_error(None, 'Login failed. Please try again.')
     else:
         form = AuthenticationForm()
 
@@ -250,13 +260,16 @@ def authority_login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            user = form.get_user()
+            try:
+                user = form.get_user()
 
-            if not user.is_staff:
-                form.add_error(None, 'Only authority/staff accounts can login here.')
-            else:
-                login(request, user)
-                return redirect('dashboard')
+                if not user.is_staff:
+                    form.add_error(None, 'Only authority/staff accounts can login here.')
+                else:
+                    login(request, user)
+                    return redirect('dashboard')
+            except DatabaseError:
+                form.add_error(None, 'Authority login failed. Please try again.')
     else:
         form = AuthenticationForm()
 
@@ -290,7 +303,7 @@ def report_complaint(request):
                 return render(request, 'report.html', {**report_context, 'form': form})
 
             allowed_locations = ['gola', 'lakhimpur', 'sitapur', 'lucknow']
-            location = form.cleaned_data.get('location', '').lower().strip()
+            location = (form.cleaned_data.get('location') or '').lower().strip()
             is_allowed = False
 
             for allowed_location in allowed_locations:
