@@ -197,7 +197,7 @@ def user_signup_view(request):
                 user = form.save()
                 user.is_staff = False
                 user.save()
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, 'Signup complete. Welcome to EcoVision AI!')
                 return redirect('home')
             except DatabaseError:
@@ -222,7 +222,7 @@ def authority_signup_view(request):
                 user = form.save()
                 user.is_staff = True
                 user.save()
-                login(request, user)
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, 'Authority signup complete. Welcome to the municipal dashboard!')
                 return redirect('dashboard')
             except DatabaseError:
