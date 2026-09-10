@@ -349,9 +349,12 @@ def report_complaint(request):
                 form.add_error(None, image_error)
                 return render(request, 'report.html', {**report_context, 'form': form})
 
-            try:
-                ai_waste_type, ai_confidence = detect_garbage_image(uploaded_image)
-            except AIDetectorSetupError as error:
+            if settings.USE_REAL_AI_MODEL:
+                try:
+                    ai_waste_type, ai_confidence = detect_garbage_image(uploaded_image)
+                except AIDetectorSetupError:
+                    ai_waste_type, ai_confidence = detect_waste_type(form.cleaned_data.get('category'))
+            else:
                 ai_waste_type, ai_confidence = detect_waste_type(form.cleaned_data.get('category'))
 
             if ai_waste_type == 'Not Garbage' or ai_confidence < 70:
@@ -379,8 +382,13 @@ def report_complaint(request):
             else:
                 complaint.verification_status = 'Verified'
 
-            complaint.save()
-            update_batch_status(complaint)
+            try:
+                complaint.save()
+                update_batch_status(complaint)
+            except DatabaseError:
+                form.add_error(None, 'Complaint could not be submitted right now. Please try again.')
+                return render(request, 'report.html', {**report_context, 'form': form})
+
             return redirect('my_complaints')
     else:
         form = ComplaintForm()
