@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.db import DatabaseError
+from django.db import DatabaseError, transaction
 from django.db.models import Avg
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -383,11 +383,20 @@ def report_complaint(request):
                 complaint.verification_status = 'Verified'
 
             try:
-                complaint.save()
-                update_batch_status(complaint)
+                with transaction.atomic():
+                    complaint.save()
+                    update_batch_status(complaint)
             except DatabaseError:
                 form.add_error(None, 'Complaint could not be submitted right now. Please try again.')
                 return render(request, 'report.html', {**report_context, 'form': form})
+
+            messages.success(
+                request,
+                f'Complaint #{complaint.id} submitted successfully and sent to the Authority Dashboard.'
+            )
+
+            if request.user.is_staff:
+                return redirect('dashboard')
 
             return redirect('my_complaints')
     else:
