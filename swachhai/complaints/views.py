@@ -1,4 +1,5 @@
 import csv
+import logging
 import math
 from collections import defaultdict
 from datetime import timedelta
@@ -17,6 +18,9 @@ from django.utils import timezone
 from .ai_detector import AIDetectorSetupError, detect_garbage_image, validate_actual_image_content
 from .forms import ComplaintForm, FeedbackForm, ResolveComplaintForm, SignupForm
 from .models import Complaint
+
+
+logger = logging.getLogger(__name__)
 
 
 def detect_waste_type(category):
@@ -290,12 +294,13 @@ def report_complaint(request):
         'service_cities': settings.SERVICE_CITIES,
         'service_open_hour': settings.SERVICE_OPEN_HOUR,
         'service_close_hour': settings.SERVICE_CLOSE_HOUR,
+        'service_hours_enforced': settings.ENFORCE_SERVICE_HOURS,
     }
 
     if request.method == 'POST':
         form = ComplaintForm(request.POST, request.FILES)
         if form.is_valid():
-            if not is_service_open_now():
+            if settings.ENFORCE_SERVICE_HOURS and not is_service_open_now():
                 form.add_error(
                     None,
                     'Service is available only between 8 AM and 5 PM. Please submit your complaint during service hours.'
@@ -386,7 +391,8 @@ def report_complaint(request):
                 with transaction.atomic():
                     complaint.save()
                     update_batch_status(complaint)
-            except DatabaseError:
+            except Exception:
+                logger.exception('Complaint submission failed for user %s', request.user.username)
                 form.add_error(None, 'Complaint could not be submitted right now. Please try again.')
                 return render(request, 'report.html', {**report_context, 'form': form})
 
