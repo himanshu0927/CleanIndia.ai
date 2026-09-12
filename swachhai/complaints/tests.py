@@ -3,6 +3,7 @@ import tempfile
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from PIL import Image
 
@@ -89,3 +90,18 @@ class ComplaintDashboardFlowTests(TestCase):
                 self.assertEqual(dashboard.status_code, 200)
                 self.assertContains(dashboard, 'Garbage is lying beside the main road.')
                 self.assertContains(dashboard, 'citizen')
+
+    def test_reset_accounts_keeps_complaints_but_removes_old_owner(self):
+        Complaint.objects.create(
+            name=self.citizen.username,
+            location='Gola',
+            category='garbage',
+            description='Test complaint',
+            image='garbage_images/test.jpg',
+        )
+        call_command('reset_accounts')
+        self.assertEqual(get_user_model().objects.count(), 2)
+
+        call_command('reset_accounts', confirm=True)
+        self.assertEqual(get_user_model().objects.count(), 0)
+        self.assertEqual(Complaint.objects.get().name, '[deleted account]')
