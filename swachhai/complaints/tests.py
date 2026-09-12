@@ -136,3 +136,40 @@ class ComplaintDashboardFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Service is available only between 8 AM and 5 PM')
         self.assertEqual(Complaint.objects.count(), 0)
+
+
+class DashboardProfileTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.citizen = user_model.objects.create_user(
+            username='citizen_profile',
+            email='citizen@example.com',
+            password='Strong-test-password-984!',
+        )
+        UserProfile.objects.create(user=self.citizen, phone_number='9876543210')
+        self.authority = user_model.objects.create_user(
+            username='authority_profile',
+            email='authority@example.com',
+            password='Strong-test-password-984!',
+            is_staff=True,
+        )
+
+    def test_citizen_dashboard_shows_only_own_signup_details(self):
+        self.client.force_login(self.citizen)
+        response = self.client.get('/my-complaints/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'citizen@example.com')
+        self.assertContains(response, '9876543210')
+        self.assertContains(response, 'Citizen')
+        self.assertNotContains(response, 'authority@example.com')
+
+    def test_authority_dashboard_handles_account_without_phone_profile(self):
+        self.client.force_login(self.authority)
+        response = self.client.get('/dashboard/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'authority@example.com')
+        self.assertContains(response, 'Authority')
+        self.assertContains(response, 'Not provided')
+        self.assertNotContains(response, 'citizen@example.com')

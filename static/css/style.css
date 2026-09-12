@@ -231,6 +231,40 @@ button:hover,
     color: var(--muted);
 }
 
+.profile-summary {
+    margin: 0 0 28px;
+    padding: 0 0 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-summary h2 {
+    margin: 0 0 14px;
+    font-size: 20px;
+}
+
+.profile-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px 24px;
+    margin: 0;
+}
+
+.profile-details div {
+    min-width: 0;
+}
+
+.profile-details dt {
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.profile-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-weight: 700;
+}
+
 .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));

@@ -1,0 +1,25 @@
+<section class="profile-summary" aria-labelledby="profile-heading">
+    <h2 id="profile-heading">My Profile</h2>
+    <dl class="profile-details">
+        <div>
+            <dt>Username</dt>
+            <dd>{{ user.username }}</dd>
+        </div>
+        <div>
+            <dt>Email</dt>
+            <dd>{{ user.email|default:"Not provided" }}</dd>
+        </div>
+        <div>
+            <dt>Phone</dt>
+            <dd>{{ user.profile.phone_number|default:"Not provided" }}</dd>
+        </div>
+        <div>
+            <dt>Account Type</dt>
+            <dd>{% if user.is_staff %}Authority{% else %}Citizen{% endif %}</dd>
+        </div>
+        <div>
+            <dt>Joined</dt>
+            <dd>{{ user.date_joined|date:"d M Y" }}</dd>
+        </div>
+    </dl>
+</section>

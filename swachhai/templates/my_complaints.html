@@ -8,6 +8,8 @@
     <p>Track your submitted complaints and resolution progress.</p>
 </div>
 
+{% include 'includes/profile_summary.html' %}
+
 {% for complaint in complaints %}
     <div class="card">
         <h3>{{ complaint.category }}</h3>

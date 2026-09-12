@@ -8,6 +8,8 @@
     <p>Track, prioritize, resolve, and export cleanliness complaints.</p>
 </div>
 
+{% include 'includes/profile_summary.html' %}
+
 <a class="resolve-btn" href="{% url 'export_complaints_csv' %}">Export Complaints CSV</a>
 
 <div class="stats">
