@@ -294,13 +294,12 @@ def report_complaint(request):
         'service_cities': settings.SERVICE_CITIES,
         'service_open_hour': settings.SERVICE_OPEN_HOUR,
         'service_close_hour': settings.SERVICE_CLOSE_HOUR,
-        'service_hours_enforced': settings.ENFORCE_SERVICE_HOURS,
     }
 
     if request.method == 'POST':
         form = ComplaintForm(request.POST, request.FILES)
         if form.is_valid():
-            if settings.ENFORCE_SERVICE_HOURS and not is_service_open_now():
+            if not is_service_open_now():
                 form.add_error(
                     None,
                     'Service is available only between 8 AM and 5 PM. Please submit your complaint during service hours.'

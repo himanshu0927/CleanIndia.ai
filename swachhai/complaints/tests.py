@@ -1,13 +1,17 @@
 import io
 import tempfile
+from datetime import datetime
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from PIL import Image
 
 from .models import Complaint, UserProfile
+from .views import is_service_open_now
 
 
 @override_settings(AUTHORITY_SIGNUP_CODE='test-authority-code')
@@ -105,3 +109,30 @@ class ComplaintDashboardFlowTests(TestCase):
         call_command('reset_accounts', confirm=True)
         self.assertEqual(get_user_model().objects.count(), 0)
         self.assertEqual(Complaint.objects.get().name, '[deleted account]')
+
+    @override_settings(SERVICE_OPEN_HOUR=8, SERVICE_CLOSE_HOUR=17)
+    def test_service_closes_at_five_pm(self):
+        for hour, minute, expected in [(16, 59, True), (17, 0, False)]:
+            with self.subTest(hour=hour, minute=minute):
+                local_time = timezone.make_aware(datetime(2026, 9, 12, hour, minute))
+                with patch('complaints.views.timezone.localtime', return_value=local_time):
+                    self.assertEqual(is_service_open_now(), expected)
+
+    @override_settings(SERVICE_OPEN_HOUR=8, SERVICE_CLOSE_HOUR=17)
+    def test_complaint_is_not_saved_after_five_pm(self):
+        self.client.force_login(self.citizen)
+        local_time = timezone.make_aware(datetime(2026, 9, 12, 17, 0))
+        with patch('complaints.views.timezone.localtime', return_value=local_time):
+            response = self.client.post('/report/', {
+                'location': 'Gola',
+                'latitude': 28.0786,
+                'longitude': 80.4705,
+                'category': 'garbage',
+                'description': 'Garbage is lying beside the main road.',
+                'image': self.make_test_image(),
+                'is_live_photo': 'true',
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Service is available only between 8 AM and 5 PM')
+        self.assertEqual(Complaint.objects.count(), 0)
