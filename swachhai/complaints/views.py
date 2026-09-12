@@ -9,14 +9,13 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AuthenticationForm
 from django.db import DatabaseError, transaction
 from django.db.models import Avg
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from .ai_detector import AIDetectorSetupError, detect_garbage_image, validate_actual_image_content
-from .forms import ComplaintForm, FeedbackForm, ResolveComplaintForm, SignupForm
+from .forms import AccountLoginForm, ComplaintForm, FeedbackForm, ResolveComplaintForm, SignupForm
 from .models import Complaint
 
 
@@ -198,10 +197,11 @@ def user_signup_view(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             try:
-                user = form.save()
-                user.is_staff = False
-                user.save()
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                with transaction.atomic():
+                    user = form.save()
+                    user.is_staff = False
+                    user.save()
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, 'Signup complete. Welcome to EcoVision AI!')
                 return redirect('home')
             except DatabaseError:
@@ -223,10 +223,11 @@ def authority_signup_view(request):
             authority_code_error = 'Invalid authority code.'
         elif form.is_valid():
             try:
-                user = form.save()
-                user.is_staff = True
-                user.save()
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                with transaction.atomic():
+                    user = form.save()
+                    user.is_staff = True
+                    user.save()
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, 'Authority signup complete. Welcome to the municipal dashboard!')
                 return redirect('dashboard')
             except DatabaseError:
@@ -242,7 +243,7 @@ def authority_signup_view(request):
 
 def user_login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = AccountLoginForm(request, data=request.POST)
         if form.is_valid():
             try:
                 user = form.get_user()
@@ -255,14 +256,14 @@ def user_login_view(request):
             except DatabaseError:
                 form.add_error(None, 'Login failed. Please try again.')
     else:
-        form = AuthenticationForm()
+        form = AccountLoginForm()
 
     return render(request, 'user_login.html', {'form': form})
 
 
 def authority_login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = AccountLoginForm(request, data=request.POST)
         if form.is_valid():
             try:
                 user = form.get_user()
@@ -275,7 +276,7 @@ def authority_login_view(request):
             except DatabaseError:
                 form.add_error(None, 'Authority login failed. Please try again.')
     else:
-        form = AuthenticationForm()
+        form = AccountLoginForm()
 
     return render(request, 'authority_login.html', {'form': form})
 

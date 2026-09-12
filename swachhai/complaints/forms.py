@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from .models import Complaint, UserProfile
@@ -58,6 +58,32 @@ class SignupForm(UserCreationForm):
             )
 
         return user
+
+
+class AccountLoginForm(AuthenticationForm):
+    username = forms.CharField(label='Username, email, or phone number')
+    error_messages = {
+        'invalid_login': (
+            'Please enter a correct username, email, or phone number and password.'
+        ),
+        'inactive': 'This account is inactive.',
+    }
+
+    def clean(self):
+        identifier = self.cleaned_data.get('username', '').strip()
+        if identifier:
+            user = User.objects.filter(username__iexact=identifier).first()
+            if user is None and '@' in identifier:
+                user = User.objects.filter(email__iexact=identifier).first()
+            if user is None:
+                profile = UserProfile.objects.select_related('user').filter(
+                    phone_number=identifier
+                ).first()
+                user = profile.user if profile else None
+            if user is not None:
+                self.cleaned_data['username'] = user.username
+
+        return super().clean()
 
 
 class ComplaintForm(forms.ModelForm):

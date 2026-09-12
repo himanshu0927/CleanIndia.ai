@@ -34,6 +34,49 @@ class SignupSessionTests(TestCase):
                 self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
                 self.assertTrue(UserProfile.objects.filter(user=user).exists())
 
+                for identifier in (
+                    user.username,
+                    user.email,
+                    user.profile.phone_number,
+                ):
+                    with self.subTest(role=role, identifier=identifier):
+                        self.client.logout()
+                        login_response = self.client.post(f'/{role}-login/', {
+                            'username': identifier,
+                            'password': 'Strong-test-password-984!',
+                        })
+                        self.assertRedirects(
+                            login_response,
+                            expected_url,
+                            fetch_redirect_response=False,
+                        )
+                        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+
+    def test_wrong_login_page_explains_account_role(self):
+        user_model = get_user_model()
+        authority = user_model.objects.create_user(
+            username='staff_login_test',
+            password='Strong-test-password-984!',
+            is_staff=True,
+        )
+        citizen = user_model.objects.create_user(
+            username='citizen_login_test',
+            password='Strong-test-password-984!',
+        )
+
+        for path, user, message in (
+            ('/user-login/', authority, 'Please use Authority Login'),
+            ('/authority-login/', citizen, 'Only authority/staff accounts'),
+        ):
+            with self.subTest(path=path):
+                response = self.client.post(path, {
+                    'username': user.username,
+                    'password': 'Strong-test-password-984!',
+                })
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, message)
+                self.assertNotIn('_auth_user_id', self.client.session)
+
 
 @override_settings(
     SERVICE_OPEN_HOUR=0,
