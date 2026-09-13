@@ -111,6 +111,15 @@ class ComplaintDashboardFlowTests(TestCase):
             content_type='image/jpeg',
         )
 
+    def test_report_offers_both_cameras(self):
+        self.client.force_login(self.citizen)
+        response = self.client.get('/report/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "openCamera('environment')")
+        self.assertContains(response, "openCamera('user')")
+        self.assertContains(response, 'id="capture-photo-btn"')
+
     def test_citizen_submission_appears_on_authority_dashboard(self):
         with tempfile.TemporaryDirectory() as media_root:
             with self.settings(MEDIA_ROOT=media_root):

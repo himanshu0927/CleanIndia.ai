@@ -44,18 +44,20 @@
     <div class="camera-box">
         <h3>Live Photo Capture</h3>
 
-        <button type="button" onclick="openCamera()">Open Camera</button>
-        <button type="button" onclick="capturePhoto()">Capture Photo</button>
-        <button type="button" onclick="stopCamera()">Stop Camera</button>
+        <div class="camera-actions">
+            <button type="button" onclick="openCamera('environment')">Back Camera</button>
+            <button type="button" onclick="openCamera('user')">Front Camera</button>
+            <button id="capture-photo-btn" type="button" onclick="capturePhoto()" disabled>Capture Photo</button>
+            <button type="button" onclick="stopCamera()">Stop Camera</button>
+        </div>
+        <p id="camera-status" role="status" aria-live="polite"></p>
 
-        <br><br>
+        <video id="camera" autoplay playsinline hidden></video>
+        <canvas id="canvas" hidden></canvas>
 
-        <video id="camera" autoplay playsinline style="display:none; width:100%; max-width:420px; border-radius:12px;"></video>
-        <canvas id="canvas" style="display:none;"></canvas>
-
-        <div id="photo-preview-box" style="display:none;">
+        <div id="photo-preview-box" hidden>
             <p><strong>Captured Photo Preview:</strong></p>
-            <img id="photo-preview" style="width:100%; max-width:420px; border-radius:12px;">
+            <img id="photo-preview" alt="Captured complaint photo">
         </div>
     </div>
 
@@ -224,19 +226,59 @@ document.addEventListener("DOMContentLoaded", function() {
 
 <script>
 let cameraStream = null;
+let cameraRequestId = 0;
+let photoPreviewUrl = null;
 
-function openCamera() {
+async function openCamera(facingMode) {
     const video = document.getElementById("camera");
+    const cameraStatus = document.getElementById("camera-status");
+    const captureButton = document.getElementById("capture-photo-btn");
+    const requestId = ++cameraRequestId;
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function(stream) {
-            cameraStream = stream;
-            video.srcObject = stream;
-            video.style.display = "block";
-        })
-        .catch(function(error) {
-            alert("Camera permission denied or camera not available.");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraStatus.textContent = "Camera is unavailable. Open this page over HTTPS and allow camera access.";
+        return;
+    }
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    video.srcObject = null;
+    video.hidden = true;
+    captureButton.disabled = true;
+    cameraStatus.textContent = `Opening ${facingMode === "environment" ? "back" : "front"} camera...`;
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { exact: facingMode } },
+            audio: false
         });
+        if (requestId !== cameraRequestId) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+        }
+
+        cameraStream = stream;
+        video.srcObject = stream;
+        video.hidden = false;
+        await video.play();
+        if (requestId === cameraRequestId) {
+            captureButton.disabled = false;
+            cameraStatus.textContent = `${facingMode === "environment" ? "Back" : "Front"} camera ready.`;
+        }
+    } catch (error) {
+        if (requestId !== cameraRequestId) return;
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        video.srcObject = null;
+        video.hidden = true;
+        cameraStatus.textContent = error.name === "OverconstrainedError" || error.name === "NotFoundError"
+            ? "This camera is not available on your device. Try the other camera."
+            : "Could not open camera. Check camera permission and try again.";
+    }
 }
 
 function capturePhoto() {
@@ -246,8 +288,8 @@ function capturePhoto() {
     const preview = document.getElementById("photo-preview");
     const imageInput = document.getElementById("id_image");
 
-    if (!cameraStream) {
-        alert("Please open camera first.");
+    if (!cameraStream || !video.videoWidth || !video.videoHeight) {
+        document.getElementById("camera-status").textContent = "Open a camera and wait for the preview before capturing.";
         return;
     }
 
@@ -258,6 +300,10 @@ function capturePhoto() {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     canvas.toBlob(function(blob) {
+        if (!blob) {
+            document.getElementById("camera-status").textContent = "Photo capture failed. Please try again.";
+            return;
+        }
         const file = new File([blob], "live-captured-complaint.jpg", {
             type: "image/jpeg"
         });
@@ -266,23 +312,30 @@ function capturePhoto() {
         dataTransfer.items.add(file);
         imageInput.files = dataTransfer.files;
         document.getElementById("is_live_photo").value = "true";
+        imageInput.dispatchEvent(new Event("change", { bubbles: true }));
 
-        preview.src = URL.createObjectURL(blob);
-        previewBox.style.display = "block";
-
-        alert("Photo captured and attached successfully.");
+        if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+        photoPreviewUrl = URL.createObjectURL(blob);
+        preview.src = photoPreviewUrl;
+        previewBox.hidden = false;
+        stopCamera();
+        document.getElementById("camera-status").textContent = "Photo captured and attached successfully.";
     }, "image/jpeg", 0.9);
 }
 
 function stopCamera() {
     const video = document.getElementById("camera");
+    cameraRequestId++;
 
     if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
         cameraStream = null;
     }
 
-    video.style.display = "none";
+    video.srcObject = null;
+    video.hidden = true;
+    document.getElementById("capture-photo-btn").disabled = true;
+    document.getElementById("camera-status").textContent = "Camera stopped.";
 }
 </script>
 

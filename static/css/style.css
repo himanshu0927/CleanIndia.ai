@@ -493,6 +493,34 @@ textarea {
     margin: 5px 6px 5px 0;
 }
 
+.camera-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.camera-actions button {
+    margin: 0;
+}
+
+#camera-status {
+    min-height: 1.5em;
+    margin: 12px 0;
+}
+
+#camera,
+#photo-preview {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    border-radius: 8px;
+}
+
+#camera[hidden],
+#photo-preview-box[hidden] {
+    display: none;
+}
+
 .map-card h3 {
     margin-top: 0;
 }
